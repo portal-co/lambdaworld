@@ -1,2 +1,2 @@
-git push main able
-git push main github
+git push -u able main
+git push -u github main
