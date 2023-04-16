@@ -185,6 +185,15 @@ function warp(x,{pure,bind,name} = IO){
     return appx(bind,warp(x[0],{pure,bind,name}),abs('f',appx(bind,warp(x[1],{pure,bind,name}),abs('x',app('f','x')))))
 }
 
+function don(m,...a){
+    if(a.length == 1){
+        return a[0]
+    }
+    var b = a.shift();
+    var c = a.shift();
+    return appx(m.bind,c,abs(b,don(m,...a)))
+}
+
 
 var pred = abs('n',abs('f',abs('x',app(app(app('n',abs('g',abs('h',app('h',app('g','f'))))),abs('u','x')),abs('u','u')))))
 var isZero = abs('n',app(app('n',abs('x',createBool(false)),createBool(true))))
@@ -196,7 +205,7 @@ var eq = abs('m',abs('n',app(app(l_and,app(app(leq,'m'),'n')),app(app(leq,'n'),'
 var tru = abs('t',abs('f','t'))
 var fals = abs('t',abs('f','f'))
 
-var jsFun = abs('x',abs('fn',abs('truthy',abs('falsy',app('fn','x')))))
+var jsFunBase = abs('x',abs('fn',abs('truthy',abs('falsy',app('fn','x')))))
 var jsTruthy = abs('t',abs('v',abs('fn',abs('truthy',abs('falsy',app(app('truthy','t'),'v'))))))
 var jsFalsy = abs('t',app('fn',abs('truthy',abs('falsy',app('falsy','t')))))
 
@@ -231,11 +240,16 @@ var addVarS = push => abs('f',abs('v',abs('p',abs('b',abs('l',appx('f',
     appx(scons,push(
         abs('m',abs('x','m')), //lift
         abs('r',abs('v',abs('x',appx(isZero,'v',app(free.pure,'x'),abs('_', appx('r',appx(pred,'v'))))))), //getVar
+        abs('f',abs('r',appx(f,abs('v',app('v','r'))))) //weave
     ),'l'),
     'v'
 ))))))
 
 var liftIOS = getLift => abs('i',abs('p',abs('b',app('l',appx(stoc,'l','i',abs('d',abs('m',app(getLift('d'),'m'))))))))
+
+var composeWeaves = abs('a',abs('b',abs('f',app('a',abs('la',app('b',abs('lb',app('f',abs('m',app('la',app('lb','m')))))))))))
+
+var weaveIO = getGetWeaveSlot => abs('f',abs('p',abs('b',abs('l',appx(stoc,'l',abs('a',abs('b',apx(composeWeaves,getGetWeaveSlot('a'),'b'))),abs('l',app('f',abs('m',app('l',appx('m','p','b','l'))))))))))
 
 
 var readerT = old => ({
@@ -260,17 +274,25 @@ var getVarB = getGetVarSlot => abs('j',app(js.lift,abs('vs',appx(getVarS(getGetV
 
 var liftIOB = getLift => abs('i',app(js.lift,abs('v',appx(liftIOS(getLift),'i'))))
 
-var pushBase = (a,b) => abs('f',appx('f',a,b))
+var pushBase = (a,b,c) => abs('f',appx('f',a,b,c))
 
-var addVarB = push => abs('m',abs('v',abs('f',appx(js.base.lift,addVarS(push),appx('f',abs('n',appx(strEq,'m','n',createChurch(0),app(churchSucc,app('f','n'))))),'v'))));
+var addVarB = push => abs('m',abs('v',abs('f',addVarS(push),appx('f',abs('n',appx(strEq,'m','n',createChurch(0),app(churchSucc,app('f','n'))))),'v')));
+
+var weaveIOB = base => abs('f',app(js.lift,abs('v',app(weaveIO(base),abs('l',app('f',abs('m',app('l',appx('m',js.base.pure,'v')))))))))
 
 var addVar = addVarB(pushBase)
 
 js.addVar = addVar
 
-var getGetVarSlotBase = x => app(x,abs('a',abs('b','b')))
+var getGetVarSlotBase = x => app(x,abs('a',abs('b',abs('c','b'))))
 
-var getLiftBase = x => app(x,abs('a',abs('b','a')))
+var getLiftBase = x => app(x,abs('a',abs('b',abs('c','a'))))
+
+var weaveBase = x => app(x,abs('a',abs('b',abs('c','c'))))
+
+var jsWeave = weaveIOB(weaveBase)
+
+js.weave = jsWeave
 
 var getVar = getVarB(getGetVarSlotBase)
 
@@ -279,6 +301,8 @@ js.getVar = getVar
 var liftIOJ = liftIOB(getLiftBase)
 
 js.liftIO = liftIOJ
+
+var jsFun = abs('f',app(js.weave,abs('l',app(IO.pure,app(jsFunBase,abs('args',app(js.liftIO,app('l',app('f','args')))))))))
 
 
 console.log(srcBase + `
