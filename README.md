@@ -1,13 +1,14 @@
 # lambdaworld
 
 ## Description
-
+A JavaScript project utilizing the `shift` suite (AST, parser, reducer) for JS code manipulation (`lcake.js`).
 
 ## Goals
-- [ ] Add project goals
+- [ ] Parse and transform JS code using Shift
+- [ ] Provide "cake" utilities (compilation layers?)
 
 ## Progress
-- [ ] Initial setup
+- [ ] Package setup with Shift dependencies
 
 ---
 *AI assisted*
